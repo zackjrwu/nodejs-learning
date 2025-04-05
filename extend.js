@@ -15,6 +15,7 @@ register an event listener and deine a type and a callback function
 
 */
 
+// Functional inheritance
 function Greetr() {
   this.greeting = 'Hello world!';
 }
@@ -34,3 +35,22 @@ greeter1.on('greet', function (data) {
 });
 
 greeter1.greet('Zack');
+
+//  Class version
+class GreetrClass extends EventEmitter {
+  constructor() {
+    super();
+    this.greeting = 'Hello world!';
+  }
+
+  greet(data) {
+    console.log(this.greeting);
+    this.emit('greet', data);
+  }
+}
+const greeter2 = new GreetrClass();
+greeter2.on('greet', function (data) {
+  console.log('Someone greeted!');
+  console.log(data);
+});
+greeter2.greet('Zack Wu');
