@@ -67,6 +67,77 @@ p.then(v => console.log('監聽者 1:', v));
 p.then(v => console.log('監聽者 2:', v));
 ```
 
+## Promise 的同步與非同步特性
+
+### 1. 真正的非同步與同步包裝
+在 Promise 鏈中，只有兩種情況會產生真正的非同步操作：
+- 初始的 Promise（第一個 Promise）
+- 手動創建的新 Promise
+
+其他所有的 `then` 操作都是同步的包裝。
+
+```javascript
+const promise = new CustomPromise((res) => {
+    setTimeout(() => {
+        res('初始值');  // 第一個真正的非同步
+    }, 1000);
+});
+
+promise
+    .then(value => {
+        // 同步的！只是包裝值
+        return value + '（同步處理）';
+    })
+    .then(value => {
+        // 還是同步的！
+        return value + '（還是同步）';
+    })
+    .then(value => {
+        // 只有手動返回新的 Promise 時，才會有真正的非同步
+        return new CustomPromise((resolve) => {
+            setTimeout(() => {
+                resolve(value + '（真正的非同步）');
+            }, 1000);
+        });
+    });
+```
+
+### 2. then 方法的同步包裝
+`then` 方法返回的 Promise 主要是為了：
+- 保持介面一致性
+- 支援鏈式調用
+- 處理值的傳遞
+
+```javascript
+this.then = function(callback) {
+    return new CustomPromise((resolve) => {
+        // 這個 Promise 是同步的！
+        // 它只是把值包裝一下，馬上就 resolve 了
+        const result = callback(value);
+        resolve(result);
+    });
+};
+```
+
+### 3. 手動創建非同步操作
+當需要真正的非同步操作時，必須手動創建新的 Promise：
+
+```javascript
+fetchUserData()  // 第一個真正的非同步
+    .then(user => {  // 同步包裝
+        return user.id;
+    })
+    .then(id => {  // 同步包裝
+        return new CustomPromise((resolve) => {  // 手動創建的非同步
+            fetchUserProfile(id)
+                .then(profile => resolve(profile));
+        });
+    })
+    .then(profile => {  // 同步包裝
+        return profile.name;
+    });
+```
+
 ## 常見陷阱
 
 1. **忘記返回值**
@@ -117,3 +188,6 @@ Promise 的實作雖然看似簡單，但包含了許多重要的設計考量：
 - 鏈式調用
 - 觀察者模式
 - 異步操作的順序保證
+- 同步與非同步操作的巧妙結合
+
+理解這些概念對於正確使用 Promise 和處理非同步操作至關重要。
